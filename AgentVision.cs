@@ -2,21 +2,24 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class EnemyVision : MonoBehaviour {
+public class AgentVision : MonoBehaviour {
 
-    Rigidbody rigidbody;
     public Camera Enemy_viewcam;
-    public AudioSource Alert_Noise;
-
     public float view_Radius;
     [Range(0,360)]
     public float view_Angle;
 
     public LayerMask targetMask;
     public LayerMask ObstacleMask;
-    public bool playerspotted = false;
 
-    public List<Transform> visibleTargets = new List<Transform>();
+    public List<Transform> visibleTargets;
+
+    // Use this for initialization
+    void Start()
+    {
+        Enemy_viewcam = gameObject.GetComponentInChildren<Camera>();
+        StartCoroutine("FindTargets_Delay", .2f);
+    }
 
     void FindVisibleTargets()
     {
@@ -27,34 +30,23 @@ public class EnemyVision : MonoBehaviour {
         {
             Transform target = targetsInViewRadius[i].transform;
             Vector3 dirToTarget = (target.position - transform.position).normalized;
-
-            
-
+        
             if (Vector3.Angle(transform.forward,dirToTarget) < view_Angle / 2)
             {
                 float distToTarget = Vector3.Distance(transform.position, target.position);
                 if (!Physics.Raycast(transform.position, dirToTarget, distToTarget, ObstacleMask))
                 {
                     visibleTargets.Add(target);
-                    playerspotted = true;
-                    Alert_Noise.Play();
+                    //target layer is just the player, so they will be visible to this agent in this case.
+                    Debug.Log("You have been spotted by: " + gameObject.name);
                 }
                 else
                 {
-                    playerspotted = false;
+                   
                 }
             }
-        }
-
-
-        if (playerspotted == true)
-        {
-            Alert_Noise.Play();
-        }
-
+        }   
     }
-
-    
 
     public Vector3 DirFromAngle(float angleInDegrees, bool angleIsGlobal) {
         if(!angleIsGlobal)
@@ -64,23 +56,12 @@ public class EnemyVision : MonoBehaviour {
         return new Vector3(Mathf.Sin(angleInDegrees * Mathf.Deg2Rad), 0, Mathf.Cos(angleInDegrees * Mathf.Deg2Rad));
     }
 
-
     IEnumerator FindTargets_Delay(float delay)
     {
         while(true)
         {
             yield return new WaitForSeconds(delay);
             FindVisibleTargets();
-
         }
-    }
-
-    // Use this for initialization
-    void Start ()
-    {
-        rigidbody = GetComponent<Rigidbody>();
-        StartCoroutine("FindTargets_Delay", .2f);
-	}
-	
-	
+    } 	
 }
